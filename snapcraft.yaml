@@ -1,0 +1,43 @@
+name: alexaweb
+version: 0.1
+summary: Use html5 voice and speaker to connect to Alexa
+description: This snap connects to Alexa
+confinement: strict  # use "strict" to enforce system access only via declared interfaces
+grade: stable # use "stable" to assert the snap quality
+
+apps:
+  alexaweb:
+    command: usr/bin/python $SNAP/bin/alexaweb/app.py
+    daemon: simple
+    restart-condition: always
+    plugs: [network, network-bind]
+    # redis server daemon
+  redis-server:
+    command: bin/start-redis-server
+    daemon: simple
+    restart-condition: always
+    plugs: [network, network-bind]
+parts:
+  alexaweb:
+    plugin: python
+    python-version: python2
+    source: src/alexaweb
+    python-packages:
+      - tornado==3.1.1
+      - wsgiref==0.1.2
+      - requests==2.7.0
+      - redis==2.10.3
+      - pydub==0.16.0
+    stage-packages: [ ffmpeg ]
+  move:
+    plugin: dump
+    source: src
+    organize:
+      certs: conf/certs
+      alexaweb: bin/alexaweb
+      redis/config/*: config/redis/
+      redis/scripts/*: bin/
+  redis:
+    plugin: make
+    source: http://download.redis.io/releases/redis-3.2.1.tar.gz
+    make-install-var: PREFIX
